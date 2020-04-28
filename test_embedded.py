@@ -35,7 +35,7 @@ def Get_test_results_single(image_datasets, dataloaders, model, f_size=512):
     recall_ks.append(Recall_at_ks(sim_mat, query_ids=query_label, gallery_ids=gallery_label, data='cub'))
     # print('{:.4f}'.format(recall_ks[0]))
 
-    return recall_ks
+    return recall_ks[0]
 
 
 def Get_test_results_doublehead_inshop(image_datasets, dataloaders, model, f_size=512):

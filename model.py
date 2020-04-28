@@ -43,7 +43,7 @@ class ClassBlock(nn.Module):
         if relu:
             add_block += [nn.LeakyReLU(0.1)]
         if dropout:
-            add_block += [nn.Dropout(  p=0.5)]
+            add_block += [nn.Dropout(p=0.5)]
         add_block = nn.Sequential(*add_block)
         add_block.apply(weights_init_kaiming)
 
@@ -479,6 +479,32 @@ class ft_net(nn.Module):
         x = torch.squeeze(x)
         x = self.classifier(x)
         return x
+
+
+# Define the ResNet50-based Model
+class ft_net_feature(nn.Module):
+
+    def __init__(self, class_num):
+        super(ft_net_feature, self).__init__()
+        model_ft = models.resnet50(pretrained=True)
+        # avg pooling to global pooling
+        model_ft.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.model = model_ft
+        self.classifier = ClassBlock(2048, class_num)
+
+    def forward(self, x):
+        x = self.model.conv1(x)
+        x = self.model.bn1(x)
+        x = self.model.relu(x)
+        x = self.model.maxpool(x)
+        x = self.model.layer1(x)
+        x = self.model.layer2(x)
+        x = self.model.layer3(x)
+        x = self.model.layer4(x)
+        x = self.model.avgpool(x)
+        f = torch.squeeze(x)
+        x = self.classifier(f)
+        return f, x
 
 # Define the ResNet50-based Model
 class ft_net_direct(nn.Module):

@@ -9,14 +9,14 @@ from torch.autograd import Variable
 import numpy as np
 import torchvision
 from torchvision import datasets, models, transforms
-#import matplotlibㄴ
-
+#import matplotlib
+from test_embedded import Get_test_results_single
 #matplotlib.use('agg')
 #import matplotlib.pyplot as plt
 from PIL import Image
 import time
 import os
-from model import ft_net
+from model import ft_net, ft_net_scratch, ft_net_feature
 from tensorboard_logger import configure, log_value
 import json
 #import visdom
@@ -26,8 +26,11 @@ import copy
 ######################################################################
 # Options
 
-data_dir = '/home/ro/FG/STCAR_RT/pytorch'
+# data_dir = '/home/ro/FG/STCAR_RT/pytorch'
 data_dir = '/home/ro/FG/CUB_RT/pytorch'
+
+# data_dir = '/home/jhlee/CUB_200_2011/pytorch'
+
 
 dir_name = '/data/ymro/AAAI2021/base_CUB/res50_lr3_fclr2'
 
@@ -36,7 +39,7 @@ e_drop2 = 0
 e_end = 20
 
 train_batchsize = 40
-
+test_batchsize = 30
 configure(dir_name)
 print(dir_name)
 if not os.path.exists(dir_name):
@@ -44,7 +47,7 @@ if not os.path.exists(dir_name):
 
 
 use_gpu = True
-gpu_id = 0
+gpu_id = 2
 gpu_ids = []
 gpu_ids.append(gpu_id)
 # set gpu id2
@@ -93,10 +96,13 @@ image_datasets['train'] = datasets.ImageFolder(os.path.join(data_dir, 'train'),
 image_datasets['test'] = datasets.ImageFolder(os.path.join(data_dir, 'test'),
                                                data_transforms['test'])
 
+dataloaders = {}
+dataloaders['train'] = torch.utils.data.DataLoader(image_datasets['train'], batch_size=train_batchsize, shuffle=True, num_workers=16)
 
-dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=train_batchsize,
-                                              shuffle=True, num_workers=16)
-               for x in ['train']}
+dataloaders['test'] = torch.utils.data.DataLoader(image_datasets['test'], batch_size= test_batchsize, shuffle=False, num_workers=8)
+
+
+
 dataset_sizes = {x: len(image_datasets[x]) for x in ['train']}
 class_names = image_datasets['train'].classes
 
@@ -141,7 +147,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 optimizer.zero_grad()
 
                 # forward
-                outputs = model(inputs)
+                _, outputs = model(inputs)
                 _, preds = torch.max(outputs.data, 1)
                 loss = criterion(outputs, labels)
 
@@ -149,11 +155,21 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                     loss.backward()
                     optimizer.step()
 
+                # results = Get_test_results_single(image_datasets['test'], dataloaders['test'], model, f_size=2048)
+                # # print(results)
+                # print(
+                #     'test accuracy : top-1 {:.4f} top-2 {:.4f} top-4 {:.4f} top-8 {:.4f}'.format(results[0], results[1],
+                #                                                                                  results[2],
+                #                                                                                  results[3]))
+
                 # statistics
                 running_loss += loss.data
                 running_corrects += torch.sum(preds == labels.data)
 
 
+            results = Get_test_results_single(image_datasets['test'], dataloaders['test'], model, f_size=2048)
+            # print(results)
+            print('test accuracy : top-1 {:.4f} top-2 {:.4f} top-4 {:.4f} top-8 {:.4f}'.format(results[0],results[1],results[2],results[3]))
             running_corrects = running_corrects.float()
             epoch_loss = running_loss / dataset_sizes[phase]
             epoch_acc = running_corrects / dataset_sizes[phase]
@@ -199,7 +215,7 @@ def load_network_path(network, save_path):
 if not os.path.isdir(dir_name):
     os.mkdir(dir_name)
 
-model = ft_net(int(len(class_names)))
+model = ft_net_feature(int(len(class_names)))
 
 if use_gpu:
     model = model.cuda()
