@@ -63,7 +63,6 @@ val_loader = torch.utils.data.DataLoader(val_dataset,
 model.train(True)
 for epoch in range(1):
     trn_loss = 0.0
-    trn_acc = 0.0
     for i, data in enumerate(tqdm(trn_loader, position=0, leave=True)):
         x, label = data
         # grad init
