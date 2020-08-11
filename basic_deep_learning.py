@@ -21,8 +21,8 @@ class Net(nn.Module):
         x = self.conv2(x)
         x = F.relu(x)
         x = F.max_pool2d(x, 2)
-        x = self.dropout(x)
         x = torch.flatten(x, 1)
+        x = self.dropout(x)
         x = self.fc1(x)
         return x
 
@@ -59,34 +59,47 @@ val_loader = torch.utils.data.DataLoader(val_dataset,
                                          shuffle=False)
 
 
-
-model.train(True)
-for epoch in range(1):
+def train(train_iter)
+    model.train(True) #training mode on
     trn_loss = 0.0
     for i, data in enumerate(tqdm(trn_loader, position=0, leave=True)):
-        x, label = data
-        # grad init
-        optimizer.zero_grad()
-        # forward propagation
-        model_output = model(x)
-        # calculate loss
-        loss = criterion(model_output, label)
+        if i == train_iter:
+            break
+        x, label = data 
+        optimizer.zero_grad() # grad init
+        model_output = model(x) # forward propagation
+        loss = criterion(model_output, label)  # calculate loss
         trn_loss += loss
-        # back propagation
-        loss.backward()
-        # weight update
+        loss.backward() # back propagation
         optimizer.step()
 
+def test()
+    model.train(False) #training mode off
+    test_acc = 0.0
+    for _, test in enumerate(tqdm(test_loader, position=0, leave=True)):
+        test_x, test_label =test
+        test_output = model(val_x)
+        t_loss = criterion(test_output, test_label)
+        _, preds = torch.max(test_output.data, 1)
+        test_acc += torch.sum(preds == test_label.data)
 
-model.train(False)
-val_loss = 0.0
-val_acc = 0.0
-for j, val in enumerate(tqdm(val_loader, position=0, leave=True)):
-    val_x, val_label = val
-    val_output = model(val_x)
-    v_loss = criterion(val_output, val_label)
-    _, preds = torch.max(val_output.data, 1)
-    val_acc += torch.sum(preds == val_label.data)
-    val_loss += v_loss
+    print('Test accuracy : {%.2f}'.format(test_acc/10000 *100))
 
-print(val_acc/10000)
+
+def visualization(num):
+    softmax = nn.Softmax()
+    get_score = model(val_loader.dataset[num][0].unsqueeze(axis=0))
+    get_pred = torch.argmax(get_score)
+    prob = softmax(get_score).squeeze()
+    confidence_score = prob[get_pred]
+    get_label = val_loader.dataset[num][1]
+
+    fig = plt.figure()
+    subplot = fig.add_subplot(1, 1, 1)
+    subplot.set_xticks([])
+    subplot.set_yticks([])
+    subplot.set_title(
+        'Prediction: %d, Confidence Score(%%): %.2f, Label: %d' % (get_pred, confidence_score * 100, get_label))
+
+    subplot.imshow(np.array(val_loader.dataset[num][0]).reshape((28, 28)),
+                   cmap=plt.cm.gray_r)
