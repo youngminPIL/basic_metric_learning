@@ -1,10 +1,11 @@
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
-from tqdm import *
+from tqdm import tqdm
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 class Net(nn.Module):
@@ -40,7 +41,7 @@ trn_dataset = datasets.MNIST('./mnist_data/',
                                  transforms.Normalize((0.1307,), (0.3081,)) # image, label
                              ]))
 
-val_dataset = datasets.MNIST("./mnist_data/",
+test_dataset = datasets.MNIST("./mnist_data/",
                              download=False,
                              train=False,
                              transform= transforms.Compose([
@@ -54,12 +55,12 @@ trn_loader = torch.utils.data.DataLoader(trn_dataset,
                                          batch_size=batch_size,
                                          shuffle=True)
 
-val_loader = torch.utils.data.DataLoader(val_dataset,
+test_loader = torch.utils.data.DataLoader(test_dataset,
                                          batch_size=batch_size,
                                          shuffle=False)
 
 
-def train(train_iter)
+def train(train_iter):
     model.train(True) #training mode on
     trn_loss = 0.0
     for i, data in enumerate(tqdm(trn_loader, position=0, leave=True)):
@@ -73,21 +74,20 @@ def train(train_iter)
         loss.backward() # back propagation
         optimizer.step()
 
-def test()
+def test():
     model.train(False) #training mode off
     test_acc = 0.0
     for _, test in enumerate(tqdm(test_loader, position=0, leave=True)):
         test_x, test_label =test
-        test_output = model(val_x)
-        t_loss = criterion(test_output, test_label)
+        test_output = model(test_x)
         _, preds = torch.max(test_output.data, 1)
         test_acc += torch.sum(preds == test_label.data)
 
-    print('Test accuracy : {%.2f}'.format(test_acc/10000 *100))
+    print('\nTest accuracy : {:.2f}'.format(test_acc/10000 *100))
 
 
 def visualization(num):
-    softmax = nn.Softmax()
+    softmax = nn.Softmax(dim=0)
     get_score = model(val_loader.dataset[num][0].unsqueeze(axis=0))
     get_pred = torch.argmax(get_score)
     prob = softmax(get_score).squeeze()
