@@ -64,7 +64,7 @@ lr4 = 0.0001
 # Load Data
 # ---------
 #
-#init_resize = (256, 256)
+init_resize = (256, 256)
 resize = (224, 224)
 
 transform_train_list = [
@@ -77,7 +77,8 @@ transform_train_list = [
 ]
 
 transform_val_list = [
-    transforms.Resize(resize, interpolation=3),  # Image.BICUBIC
+    transforms.Resize(init_resize, interpolation=3),  # Image.BICUBIC
+    transforms.CenterCrop(resize)
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ]
