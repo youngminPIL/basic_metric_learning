@@ -16,7 +16,7 @@ from test_embedded import Get_test_results_single
 from PIL import Image
 import time
 import os
-from model import ft_net, ft_net_scratch, ft_net_feature
+from model import ft_net, ft_net_scratch, ft_net_option_feature
 from tensorboard_logger import configure, log_value
 import json
 #import visdom
@@ -78,7 +78,7 @@ transform_train_list = [
 
 transform_val_list = [
     transforms.Resize(init_resize, interpolation=3),  # Image.BICUBIC
-    transforms.CenterCrop(resize)
+    transforms.CenterCrop(resize),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ]
@@ -167,8 +167,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 running_loss += loss.data
                 running_corrects += torch.sum(preds == labels.data)
 
-
-            results = Get_test_results_single(image_datasets['test'], dataloaders['test'], model, f_size=2048)
+            results = Get_test_results_single(image_datasets['test'], dataloaders['test'], model, f_size=512)
             # print(results)
             print('test accuracy : top-1 {:.4f} top-2 {:.4f} top-4 {:.4f} top-8 {:.4f}'.format(results[0],results[1],results[2],results[3]))
             running_corrects = running_corrects.float()
@@ -216,8 +215,8 @@ def load_network_path(network, save_path):
 if not os.path.isdir(dir_name):
     os.mkdir(dir_name)
 
-model = ft_net_feature(int(len(class_names)))
-
+model = ft_net_option_feature(int(len(class_names)), 512, 1, 2)
+print('ok')
 if use_gpu:
     model = model.cuda()
     # nn.DataParallel(model, device_ids=[2,3]).cuda()
