@@ -215,7 +215,7 @@ def load_network_path(network, save_path):
 if not os.path.isdir(dir_name):
     os.mkdir(dir_name)
 
-model = ft_net_option_feature(int(len(class_names)), 512, 1, 2)
+model = ft_net_option_feature(int(len(class_names)), 512, 1, 0)
 print('ok')
 if use_gpu:
     model = model.cuda()
